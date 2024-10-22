@@ -13,8 +13,6 @@ const PORT = process.env.PORT || 3000;
 // Array to store logs
 const logs = [];
 
-// Helmet to set secure HTTP headers
-app.use(helmet());
 
 // Rate Limiting: Limit each IP to 100 requests per windowMs (15 minutes)
 const limiter = rateLimit({

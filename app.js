@@ -5,7 +5,7 @@ const rateLimit = require('express-rate-limit'); // Rate limiting
 const cors = require('cors'); // CORS protection
 const morgan = require('morgan'); // HTTP request logger
 const getmac = require('getmac'); // Get MAC address
-
+const axios = require('axios')
 const app = express();
 
 const PORT = process.env.PORT || 3000;
@@ -81,6 +81,41 @@ app.get('/Site-Logs', (req, res) => {
     res.json(logs); // Send logs as JSON
 });
 
+// Route to get the Minecraft head image without the helmet
+app.get('/head/:username/nohelm', async (req, res) => {
+    const { username } = req.params;
+
+    try {
+        // Attempt to fetch the image from mc-heads.net
+        const response = await axios({
+            method: 'get',
+            url: `https://mc-heads.net/head/${username}/nohelm`,
+            responseType: 'arraybuffer' // Ensures we get the image data in binary form
+        });
+
+        // Set the content type to image/png
+        res.setHeader('Content-Type', 'image/png');
+        // Send the image back as a response
+        res.send(Buffer.from(response.data, 'binary'));
+    } catch (error) {
+        console.log(`mc-heads.net failed, trying minotar.net for ${username}`);
+
+        // Fallback to minotar.net if the first attempt fails
+        try {
+            const fallbackResponse = await axios({
+                method: 'get',
+                url: `https://minotar.net/avatar/${username}/32`,
+                responseType: 'arraybuffer'
+            });
+
+            res.setHeader('Content-Type', 'image/png');
+            res.send(Buffer.from(fallbackResponse.data, 'binary'));
+        } catch (fallbackError) {
+            console.error('Both mc-heads.net and minotar.net failed:', fallbackError);
+            res.status(500).send('Error fetching Minecraft head');
+        }
+    }
+});
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);

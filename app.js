@@ -114,6 +114,35 @@ app.get('/head/:username/nohelm', async (req, res) => {
         }
     }
 });
+
+
+// Function to verify if a Minecraft username is valid using Mojang API
+async function verifyMinecraftUser(username) {
+    try {
+        const response = await axios.get(`https://api.mojang.com/users/profiles/minecraft/${username}`);
+        return response.status === 200; // If the status is 200, the username exists
+    } catch (error) {
+        return false; // If there's an error (e.g., 404), the username does not exist
+    }
+}
+
+// GET endpoint to verify Minecraft username
+app.get('/verify-username/:username', async (req, res) => {
+    const { username } = req.params;
+
+    if (!username) {
+        return res.status(400).json({ error: 'Username is required' });
+    }
+
+    const isValidUser = await verifyMinecraftUser(username);
+    if (isValidUser) {
+        return res.status(200).json({ valid: true, message: 'Username is valid.' });
+    } else {
+        return res.status(404).json({ valid: false, message: 'Username does not exist.' });
+    }
+});
+
+
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
